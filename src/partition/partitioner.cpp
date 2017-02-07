@@ -1,4 +1,5 @@
 #include "partition/partitioner.hpp"
+#include "partition/annotated_partition.hpp"
 #include "partition/bisection_graph.hpp"
 #include "partition/recursive_bisection.hpp"
 #include "partition/recursive_bisection_stats.hpp"
@@ -65,7 +66,9 @@ CompressedNodeBasedGraph LoadCompressedNodeBasedGraph(const std::string &path)
     return graph;
 }
 
-void LogGeojson(const std::string &filename, std::vector<std::uint32_t> bisection_ids)
+void LogGeojson(const double balance,
+                const std::string &filename,
+                std::vector<std::uint32_t> bisection_ids)
 {
     // reload graph, since we destroyed the old one
     auto compressed_node_based_graph = LoadCompressedNodeBasedGraph(filename);
@@ -87,16 +90,7 @@ void LogGeojson(const std::string &filename, std::vector<std::uint32_t> bisectio
         return level;
     };
 
-    const auto reverse_bits = [](std::uint32_t x) {
-        x = ((x >> 1) & 0x55555555u) | ((x & 0x55555555u) << 1);
-        x = ((x >> 2) & 0x33333333u) | ((x & 0x33333333u) << 2);
-        x = ((x >> 4) & 0x0f0f0f0fu) | ((x & 0x0f0f0f0fu) << 4);
-        x = ((x >> 8) & 0x00ff00ffu) | ((x & 0x00ff00ffu) << 8);
-        x = ((x >> 16) & 0xffffu) | ((x & 0xffffu) << 16);
-        return x;
-    };
-
-    std::transform(bisection_ids.begin(), bisection_ids.end(), bisection_ids.begin(), reverse_bits);
+    AnnotatedPartition partition(graph, balance, bisection_ids);
 
     printBisectionStats(bisection_ids, graph);
     std::vector<std::vector<util::Coordinate>> border_vertices(33);
@@ -158,7 +152,8 @@ int Partitioner::Run(const PartitionConfig &config)
                                            config.num_optimizing_cuts,
                                            config.small_component_size);
 
-    LogGeojson(config.compressed_node_based_graph_path.string(),
+    LogGeojson(config.balance,
+               config.compressed_node_based_graph_path.string(),
                recursive_bisection.BisectionIDs());
 
     return 0;

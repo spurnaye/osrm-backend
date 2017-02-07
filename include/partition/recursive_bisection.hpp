@@ -1,6 +1,7 @@
 #ifndef OSRM_PARTITION_RECURSIVE_BISECTION_HPP_
 #define OSRM_PARTITION_RECURSIVE_BISECTION_HPP_
 
+#include "util/typedefs.hpp"
 #include "partition/bisection_graph.hpp"
 #include "partition/graph_view.hpp"
 #include "partition/recursive_bisection_state.hpp"
@@ -23,7 +24,7 @@ class RecursiveBisection
                        const std::size_t num_optimizing_cuts,
                        const std::size_t small_component_size);
 
-    const std::vector<RecursiveBisectionState::BisectionID> &BisectionIDs() const;
+    const std::vector<BisectionID> &BisectionIDs() const;
 
   private:
     BisectionGraph &bisection_graph;

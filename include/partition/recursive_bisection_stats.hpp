@@ -3,6 +3,7 @@
 
 #include "partition/bisection_graph.hpp"
 #include "partition/recursive_bisection_state.hpp"
+#include "util/typedefs.hpp"
 
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace osrm
 namespace partition
 {
 // generates some statistics on a recursive bisection to describe its quality/parameters
-void printBisectionStats(std::vector<RecursiveBisectionState::BisectionID> const &bisection_ids,
+void printBisectionStats(std::vector<BisectionID> const &bisection_ids,
                          const BisectionGraph &graph);
 } // namespace partition
 } // namespace osrm

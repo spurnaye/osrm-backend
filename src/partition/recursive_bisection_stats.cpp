@@ -12,15 +12,15 @@ namespace osrm
 {
 namespace partition
 {
-void printBisectionStats(std::vector<RecursiveBisectionState::BisectionID> const &bisection_ids,
+void printBisectionStats(std::vector<BisectionID> const &bisection_ids,
                          const BisectionGraph &graph)
 {
     BOOST_ASSERT(graph.NumberOfNodes() == bisection_ids.size());
     std::size_t total_border_nodes = 0;
-    std::unordered_map<RecursiveBisectionState::BisectionID, std::size_t> cell_sizes[32];
-    std::unordered_map<RecursiveBisectionState::BisectionID, std::size_t> border_nodes[32];
+    std::unordered_map<BisectionID, std::size_t> cell_sizes[32];
+    std::unordered_map<BisectionID, std::size_t> border_nodes[32];
 
-    std::unordered_set<RecursiveBisectionState::BisectionID> all_ids[32];
+    std::unordered_set<BisectionID> all_ids[32];
 
     std::uint32_t flag = 0;
     for (std::uint32_t level = 0; level < 32; ++level)
@@ -80,7 +80,7 @@ void printBisectionStats(std::vector<RecursiveBisectionState::BisectionID> const
         std::size_t min_border = -1, max_border = 1, total_border = 0;
 
         const auto summarize =
-            [](const std::unordered_map<RecursiveBisectionState::BisectionID, std::size_t> &map,
+            [](const std::unordered_map<BisectionID, std::size_t> &map,
                std::size_t &min,
                std::size_t &max,
                std::size_t &total) {
