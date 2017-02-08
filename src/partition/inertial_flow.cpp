@@ -99,7 +99,7 @@ InertialFlow::BestMinCut(const std::size_t n, const double ratio, const double b
         if (bigger_side > allowed_balance)
             return bigger_side / static_cast<double>(allowed_balance);
         else
-            return 0.0;
+            return 1.0;
     };
 
     auto best_balance = 1;

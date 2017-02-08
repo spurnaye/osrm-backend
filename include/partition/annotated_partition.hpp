@@ -79,16 +79,35 @@ class AnnotatedPartition
                << "\tmemory consumption: " << total_memory_cells / (1024.0 * 1024.0) << " MB."
                << "\n";
             os << "\tcell sizes:";
-            for( auto s : cell_sizes )
+            for (auto s : cell_sizes)
                 os << " " << s;
             os << std::endl;
             return os;
         }
+
+        std::ostream &logMachinereadable(std::ostream &os,
+                                         const std::string &identification,
+                                         std::size_t depth,
+                                         const bool print_header = false) const
+        {
+            if (print_header)
+                os << "[" << identification << "] # depth cells total_nodes border_nodes "
+                                               "max_border_nodes border_arcs max_border_arcs bytes "
+                                               "cell_sizes*\n";
+
+            os << "[" << identification << "] " << depth << " " << number_of_cells << " " << contained_nodes
+               << " " << border_nodes << " " << max_border_nodes_per_cell << " " << border_arcs << " "
+               << max_border_arcs_per_cell << " " << total_memory_cells;
+
+            for (auto s : cell_sizes)
+                os << " " << s;
+
+            os << "\n";
+            return os;
+        }
     };
 
-    AnnotatedPartition(const BisectionGraph &graph,
-                       const double balance,
-                       const std::vector<BisectionID> &bisection_ids);
+    AnnotatedPartition(const BisectionGraph &graph, const std::vector<BisectionID> &bisection_ids);
 
   private:
     // print distribution of level graph as it is
@@ -96,9 +115,8 @@ class AnnotatedPartition
                         const BisectionGraph &graph,
                         const std::vector<BisectionID> &bisection_ids) const;
 
-    // find levels according to balance in the component tree
-    void SearchLevels(double balance,
-                      const std::vector<SizedID> &implicit_tree,
+    // find levels that offer good distribution of average cell sizes
+    void SearchLevels(const std::vector<SizedID> &implicit_tree,
                       const BisectionGraph &graph,
                       const std::vector<BisectionID> &bisection_ids) const;
 
