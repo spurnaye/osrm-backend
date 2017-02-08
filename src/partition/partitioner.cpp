@@ -92,7 +92,6 @@ void LogGeojson(const double balance,
 
     AnnotatedPartition partition(graph, balance, bisection_ids);
 
-    printBisectionStats(bisection_ids, graph);
     std::vector<std::vector<util::Coordinate>> border_vertices(33);
 
     for (NodeID nid = 0; nid < graph.NumberOfNodes(); ++nid)
