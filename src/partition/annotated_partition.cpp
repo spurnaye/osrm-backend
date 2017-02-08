@@ -157,12 +157,12 @@ void AnnotatedPartition::PrintBisection(const std::vector<SizedID> &implicit_tre
         {
             const auto prefix = id_queue.front();
             id_queue.pop();
-            if (level == 0 || hasChildren(implicit_tree, prefix, level-1))
+            if (level == 0 || hasChildren(implicit_tree, prefix, level - 1))
             {
                 current_level.push_back(
-                    std::pair<BisectionID, std::uint32_t>(leftChild(prefix, level), level+1));
+                    std::pair<BisectionID, std::uint32_t>(leftChild(prefix, level), level + 1));
                 current_level.push_back(
-                    std::pair<BisectionID, std::uint32_t>(rightChild(prefix, level), level+1));
+                    std::pair<BisectionID, std::uint32_t>(rightChild(prefix, level), level + 1));
             }
             add_child(leftChild(prefix, level), level);
             add_child(rightChild(prefix, level), level);
@@ -195,6 +195,7 @@ void AnnotatedPartition::SearchLevels(double balance,
         stats.print(std::cout);
     };
 
+    std::size_t max_size = 0.5 * graph.NumberOfNodes();
     while (!current_level.empty())
     {
         std::size_t total_size = 0;
@@ -219,7 +220,7 @@ void AnnotatedPartition::SearchLevels(double balance,
             }
         }
 
-        std::size_t max_size = balance * (total_size / static_cast<double>(count));
+        // std::size_t max_size = balance * (total_size / static_cast<double>(count));
 
         current_level.clear();
 
@@ -249,6 +250,7 @@ void AnnotatedPartition::SearchLevels(double balance,
             id_queue.pop();
         }
         print_level();
+        max_size *= 0.5;
     }
 }
 
@@ -310,13 +312,20 @@ AnnotatedPartition::AnalyseLevel(const BisectionGraph &graph,
     const auto memory =
         4 * std::accumulate(border_arcs.begin(), border_nodes.end(), std::size_t(0), squarded_size);
 
+    std::vector<std::size_t> cell_sizes_vec;
+    cell_sizes_vec.resize(cell_sizes.size());
+    std::transform(cell_sizes.begin(), cell_sizes.end(), cell_sizes_vec.begin(), [](const auto &pair) {
+        return pair.second;
+    });
+
     return {border_nodes_total,
             border_arcs_total,
             contained_nodes,
             border_nodes.size(),
             max_nodes,
             max_arcs,
-            memory};
+            memory,
+            std::move(cell_sizes_vec)};
 }
 
 std::vector<std::uint32_t> AnnotatedPartition::ComputeCellIDs(

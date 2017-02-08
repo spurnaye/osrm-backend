@@ -65,6 +65,7 @@ class AnnotatedPartition
         std::size_t max_border_arcs_per_cell;
 
         std::size_t total_memory_cells;
+        std::vector<std::size_t> cell_sizes;
 
         std::ostream &print(std::ostream &os) const
         {
@@ -72,11 +73,15 @@ class AnnotatedPartition
                << "\t#border nodes: " << border_nodes << " #border arcs: " << border_arcs
                << " #cells: " << number_of_cells << " #contained nodes: " << contained_nodes << "\n"
                << "\tborder nodes: max: " << max_border_nodes_per_cell
-               << "avg : " << static_cast<double>(border_nodes) / number_of_cells
+               << " avg : " << static_cast<double>(border_nodes) / number_of_cells
                << " border arcs: max: " << max_border_arcs_per_cell << " "
                << " avg: " << static_cast<double>(border_arcs) / number_of_cells << "\n"
                << "\tmemory consumption: " << total_memory_cells / (1024.0 * 1024.0) << " MB."
-               << std::endl;
+               << "\n";
+            os << "\tcell sizes:";
+            for( auto s : cell_sizes )
+                os << " " << s;
+            os << std::endl;
             return os;
         }
     };
