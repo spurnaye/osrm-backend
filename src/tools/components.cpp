@@ -1,3 +1,4 @@
+#include "extractor/pearce_scc.hpp"
 #include "extractor/tarjan_scc.hpp"
 #include "util/coordinate.hpp"
 #include "util/coordinate_calculation.hpp"
