@@ -198,9 +198,16 @@ if (CMAKE_ARGC)
     # Collect remaining arguments for passing to mason_use
     set(_MASON_ARGS)
     if (${CMAKE_ARGC} LESS 5)
-        message(FATAL_ERROR "Usage: mason.sh install PACKAGE VERSION")
+        message(FATAL_ERROR "Usage: mason.sh [install|prefix] PACKAGE VERSION")
     endif()
 
-    # Install the package
-    mason_use(${CMAKE_ARGV4} VERSION ${CMAKE_ARGV5})
+    if (${CMAKE_ARGV3} STREQUAL "install")
+        # Install the package
+        mason_use(${CMAKE_ARGV4} VERSION ${CMAKE_ARGV5})
+    elseif (${CMAKE_ARGV3} STREQUAL "prefix")
+        message("${MASON_PACKAGE_DIR}/${CMAKE_ARGV4}/${CMAKE_ARGV5}")
+    else()
+        message(FATAL_ERROR "Usage: mason.sh [install|prefix] PACKAGE VERSION")
+    endif()
+
 endif()
