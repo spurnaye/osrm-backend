@@ -197,16 +197,10 @@ mason_detect_platform()
 if (CMAKE_ARGC)
     # Collect remaining arguments for passing to mason_use
     set(_MASON_ARGS)
-    foreach(I RANGE 4 ${CMAKE_ARGC})
-        list(APPEND _MASON_ARGS "${CMAKE_ARGV${I}}")
-    endforeach()
+    if (${CMAKE_ARGC} LESS 5)
+        message(FATAL_ERROR "Usage: mason.sh install PACKAGE VERSION")
+    endif()
 
     # Install the package
-    mason_use(${_MASON_ARGS})
-
-    # Optionally print variables
-    if(DEFINED MASON_PACKAGE_${CMAKE_ARGV4}_${CMAKE_ARGV3})
-        # CMake can't write to stdout with message()
-        execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${MASON_PACKAGE_${CMAKE_ARGV4}_${CMAKE_ARGV3}}")
-    endif()
+    mason_use(${CMAKE_ARGV4} VERSION ${CMAKE_ARGV5})
 endif()
