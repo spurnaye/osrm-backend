@@ -63,18 +63,21 @@ local profile = {
     'vehicle',
     'permissive',
     'designated',
-    'destination',
-    'hov' -- we might filter hov out later depending on the avoid settings or add penalties
+    'hov'
   },
 
   access_tag_blacklist = Set {
     'no',
-    'private',
     'agricultural',
     'forestry',
     'emergency',
-    'psv',
-    'delivery'
+    'psv'
+  },
+
+  local_access_tag_list = Set {
+    'private',
+    'delivery',
+    'destination'
   },
 
   access_tags_hierarchy = Sequence {
@@ -358,6 +361,7 @@ function way_function(way, result)
   Handlers.run(handlers,way,result,data,profile)
 end
 
+-- Called during edge-based-graph creation
 function turn_function (turn)
   -- Use a sigmoid function to return a penalty that maxes out at turn_penalty
   -- over the space of 0-180 degrees.  Values here were chosen by fitting

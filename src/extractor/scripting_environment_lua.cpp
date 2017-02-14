@@ -343,7 +343,11 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
         "forward_mode",
         sol::property(&ExtractionWay::get_forward_mode, &ExtractionWay::set_forward_mode),
         "backward_mode",
-        sol::property(&ExtractionWay::get_backward_mode, &ExtractionWay::set_backward_mode));
+        sol::property(&ExtractionWay::get_backward_mode, &ExtractionWay::set_backward_mode),
+        "forward_local_access_only",
+        &ExtractionWay::forward_local_access_only,
+        "backward_local_access_only",
+        &ExtractionWay::backward_local_access_only);
 
     context.state.new_usertype<ExtractionSegment>("ExtractionSegment",
                                                   "source",

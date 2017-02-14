@@ -195,7 +195,7 @@ function Handlers.handle_hov(way,result,data,profile)
   end
 end
 
--- check accessibility by traversing our acces tag hierarchy
+-- check accessibility by traversing our access tag hierarchy
 function Handlers.handle_access(way,result,data,profile)
   data.forward_access, data.backward_access =
     Tags.get_forward_backward_by_set(way,data,profile.access_tags_hierarchy)
@@ -210,6 +210,14 @@ function Handlers.handle_access(way,result,data,profile)
 
   if result.forward_mode == mode.inaccessible and result.backward_mode == mode.inaccessible then
     return false
+  end
+
+  if profile.local_access_tag_list[data.forward_access] then
+      result.forward_local_access_only = true
+  end
+
+  if profile.local_access_tag_list[data.backward_access] then
+      result.backward_local_access_only = true
   end
 end
 
