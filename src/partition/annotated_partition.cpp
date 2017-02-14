@@ -25,8 +25,12 @@ const constexpr auto SHIFT_TO_MSB_BISECTION_ID = sizeof(BisectionID) * CHAR_BIT 
 // an invalid ID for a cell
 const constexpr std::uint32_t INVALID_CELLID = std::numeric_limits<std::uint32_t>::max();
 
-auto masked(const BisectionID id, const std::uint32_t level)
+auto masked(const BisectionID id, const std::int32_t level)
 {
+    // special treatment for negative level
+    if (level == -1)
+        return 0u;
+
     // 0.01.1 with 1 starting at the level+1_th most significant bit (level = 0 -> 01..1)
     const auto cut_below_level = (1 << (SHIFT_TO_MSB_BISECTION_ID - level)) - 1;
     const auto mask = std::numeric_limits<BisectionID>::max() ^ cut_below_level;
@@ -42,11 +46,11 @@ auto makeCompare(const std::uint32_t level)
 }
 
 // build a tree of cells from the IDs present:
-auto leftChild(const BisectionID id_prefix, const std::uint32_t /*level*/) { return id_prefix; }
+auto leftChild(const BisectionID id_prefix, const std::int32_t /*level*/) { return id_prefix; }
 
 // given the prefix 10.... on level 1 (second level), the the right child would be
 // 101.... on level 2
-auto rightChild(const BisectionID id_prefix, const std::uint32_t level)
+auto rightChild(const BisectionID id_prefix, const std::int32_t level)
 {
     return id_prefix | (1 << (SHIFT_TO_MSB_BISECTION_ID - (level + 1)));
 }
@@ -54,7 +58,7 @@ auto rightChild(const BisectionID id_prefix, const std::uint32_t level)
 // get the range of all children
 auto getChildrenRange(const std::vector<AnnotatedPartition::SizedID> &implicit_tree,
                       const BisectionID id_prefix,
-                      const std::uint32_t level)
+                      const std::int32_t level)
 {
     AnnotatedPartition::SizedID id = {id_prefix, 0};
 
@@ -142,8 +146,6 @@ void AnnotatedPartition::PrintBisection(const std::vector<SizedID> &implicit_tre
                                         const std::vector<BisectionID> &bisection_ids) const
 {
     // print some statistics on the bisection tree
-    // std::cout << "[Unmodified Bisection]:\n";
-
     std::queue<BisectionID> id_queue;
     id_queue.push(0);
 
@@ -154,30 +156,29 @@ void AnnotatedPartition::PrintBisection(const std::vector<SizedID> &implicit_tre
             id_queue.push(prefix);
     };
 
-    for (std::uint32_t level = 0; !id_queue.empty(); ++level)
+    for (std::int32_t level = -1; !id_queue.empty(); ++level)
     {
         auto level_size = id_queue.size();
-        std::vector<std::pair<BisectionID, std::uint32_t>> current_level;
+        std::vector<std::pair<BisectionID, std::int32_t>> current_level;
         while (level_size--)
         {
             const auto prefix = id_queue.front();
             id_queue.pop();
-            if (level == 0 || hasChildren(implicit_tree, prefix, level - 1))
+            if (level == -1 || hasChildren(implicit_tree, prefix, level))
             {
                 current_level.push_back(
-                    std::pair<BisectionID, std::uint32_t>(leftChild(prefix, level-1), level + 1));
+                    std::pair<BisectionID, std::uint32_t>(leftChild(prefix, level), level + 1));
                 current_level.push_back(
-                    std::pair<BisectionID, std::uint32_t>(rightChild(prefix, level-1), level + 1));
+                    std::pair<BisectionID, std::uint32_t>(rightChild(prefix, level), level + 1));
             }
-            add_child(leftChild(prefix, level-1), level);
-            add_child(rightChild(prefix, level-1), level);
+            add_child(leftChild(prefix, level), level);
+            add_child(rightChild(prefix, level), level);
         }
         if (!current_level.empty())
         {
             const auto cell_ids = ComputeCellIDs(current_level, graph, bisection_ids);
             const auto stats = AnalyseLevel(graph, cell_ids);
-            stats.logMachinereadable(std::cout, "bisection", level, level == 0);
-            // stats.print(std::cout);
+            stats.logMachinereadable(std::cout, "bisection", level, level == -1);
         }
     }
 }
@@ -186,20 +187,19 @@ void AnnotatedPartition::SearchLevels(const std::vector<SizedID> &implicit_tree,
                                       const BisectionGraph &graph,
                                       const std::vector<BisectionID> &bisection_ids) const
 {
-    std::vector<std::pair<BisectionID, std::uint32_t>> current_level;
-    // std::cout << "[balanced via DFS]\n";
+    std::vector<std::pair<BisectionID, std::int32_t>> current_level;
 
     // start searching with level 0 at prefix 0
-    current_level.push_back({static_cast<BisectionID>(0), 0u});
-    std::size_t level = 0;
+    current_level.push_back({static_cast<BisectionID>(0), -1});
+    std::int32_t level = -1;
 
     const auto print_level = [&]() {
         if (current_level.empty())
             return;
+    
         const auto cell_ids = ComputeCellIDs(current_level, graph, bisection_ids);
         const auto stats = AnalyseLevel(graph, cell_ids);
-        // stats.print(std::cout);
-        stats.logMachinereadable(std::cout, "dfs-balanced", level, level == 0);
+        stats.logMachinereadable(std::cout, "dfs-balanced", level, level == -1);
         ++level;
     };
 
@@ -208,58 +208,54 @@ void AnnotatedPartition::SearchLevels(const std::vector<SizedID> &implicit_tree,
     {
         std::size_t total_size = 0;
         std::size_t count = 0;
-        std::queue<std::pair<BisectionID, std::uint32_t>> id_queue;
+        std::queue<std::pair<BisectionID, std::int32_t>> id_queue;
         for (auto element : current_level)
         {
             // don't relax final cells
-            if (element.second == 0 ||
-                hasChildren(implicit_tree, element.first, element.second - 1))
+            if (element.second == -1 || hasChildren(implicit_tree, element.first, element.second))
             {
                 total_size += getCellSize(
-                    implicit_tree, leftChild(element.first, element.second-1), element.second);
+                    implicit_tree, leftChild(element.first, element.second), element.second + 1);
                 id_queue.push(std::pair<BisectionID, std::uint32_t>(
-                    leftChild(element.first, element.second-1), element.second + 1));
+                    leftChild(element.first, element.second), element.second + 1));
 
                 total_size += getCellSize(
-                    implicit_tree, rightChild(element.first, element.second-1), element.second);
+                    implicit_tree, rightChild(element.first, element.second), element.second + 1);
                 id_queue.push(std::pair<BisectionID, std::uint32_t>(
-                    rightChild(element.first, element.second-1), element.second + 1));
+                    rightChild(element.first, element.second), element.second + 1));
                 count += 2;
             }
         }
-
         auto avg_size = (total_size / static_cast<double>(count));
 
         current_level.clear();
 
         const auto relax = [&id_queue, implicit_tree, avg_size, &current_level](
             const std::pair<BisectionID, std::uint32_t> &element) {
-            const auto size = getCellSize(implicit_tree, element.first, element.second - 1);
+            const auto size = getCellSize(implicit_tree, element.first, element.second);
             if (!hasChildren(implicit_tree, element.first, element.second))
             {
                 current_level.push_back(element);
             }
             else
             {
-                const auto left = leftChild(element.first, element.second-1);
-                const auto right = rightChild(element.first, element.second-1);
+                const auto left = leftChild(element.first, element.second);
+                const auto right = rightChild(element.first, element.second);
 
                 const auto get_penalty = [avg_size](const auto size) {
                     return std::abs(size - avg_size);
                 };
 
                 if (get_penalty(size) <
-                    0.5 * (get_penalty(getCellSize(implicit_tree, left, element.second)) +
-                           get_penalty(getCellSize(implicit_tree, right, element.second))))
+                    0.5 * (get_penalty(getCellSize(implicit_tree, left, element.second+1)) +
+                           get_penalty(getCellSize(implicit_tree, right, element.second+1))))
                 {
                     current_level.push_back(element);
                 }
                 else
                 {
-                    id_queue.push(std::pair<BisectionID, std::uint32_t>(
-                        leftChild(element.first, element.second-1), element.second + 1));
-                    id_queue.push(std::pair<BisectionID, std::uint32_t>(
-                        rightChild(element.first, element.second-1), element.second + 1));
+                    id_queue.push(std::pair<BisectionID, std::uint32_t>(left, element.second + 1));
+                    id_queue.push(std::pair<BisectionID, std::uint32_t>(right, element.second + 1));
                 }
             }
         };
@@ -350,7 +346,7 @@ AnnotatedPartition::AnalyseLevel(const BisectionGraph &graph,
 }
 
 std::vector<std::uint32_t> AnnotatedPartition::ComputeCellIDs(
-    const std::vector<std::pair<BisectionID, std::uint32_t>> &prefixes,
+    const std::vector<std::pair<BisectionID, std::int32_t>> &prefixes,
     const BisectionGraph &graph,
     const std::vector<BisectionID> &bisection_ids) const
 {
@@ -362,7 +358,7 @@ std::vector<std::uint32_t> AnnotatedPartition::ComputeCellIDs(
         const auto id = bisection_ids[node.original_id];
 
         const auto is_prefixed_by = [id](const auto &prefix) {
-            return masked(id, prefix.second - 1) == prefix.first;
+            return masked(id, prefix.second) == prefix.first;
         };
 
         const auto prefix = std::find_if(prefixes.begin(), prefixes.end(), is_prefixed_by);

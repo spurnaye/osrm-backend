@@ -125,7 +125,7 @@ class AnnotatedPartition
                               const std::vector<std::uint32_t> &cell_ids) const;
 
     std::vector<std::uint32_t>
-    ComputeCellIDs(const std::vector<std::pair<BisectionID, std::uint32_t>> &prefixes,
+    ComputeCellIDs(const std::vector<std::pair<BisectionID, std::int32_t>> &prefixes,
                    const BisectionGraph &graph,
                    const std::vector<BisectionID> &bisection_ids) const;
 };
